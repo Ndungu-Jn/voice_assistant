@@ -3,3 +3,9 @@
 
 #Audio files generated at runtime
 *.wav
+
+#Downloaded models/binaries
+piper/
+
+#Python cache
+__pycache__/
