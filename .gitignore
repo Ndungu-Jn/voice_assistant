@@ -1,0 +1,5 @@
+#Virtual environment
+.venv/
+
+#Audio files generated at runtime
+*.wav
