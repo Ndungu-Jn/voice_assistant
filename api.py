@@ -1,7 +1,7 @@
-
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
+from pydantic import BaseModel
 import shutil
 
 from sound_to_text import transcribe
@@ -19,19 +19,10 @@ app.add_middleware(
 
 history = [{"role": "system", "content": SYSTEM_PROMPT}]
 
-@app.post("/chat")
-async def chat(audio: UploadFile = File(...)):
-    global history
+class TextMessage(BaseModel):
+    text: str
 
-    input_path = "uploaded_input.webm"
-    with open(input_path, "wb") as f:
-        shutil.copyfileobj(audio.file, f)
-
-    try:
-        text_said = transcribe(input_path)
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"error": f"Transcription failed: {e}"})
-
+async def handle_message(text_said: str):
     if not text_said.strip():
         return JSONResponse(status_code=400, content={"error": "Didn't catch anything, try again."})
 
@@ -54,6 +45,23 @@ async def chat(audio: UploadFile = File(...)):
 
     return JSONResponse(content={"you_said": text_said, "reply": reply, "audio_url": "/audio"})
 
+@app.post("/chat")
+async def chat(audio: UploadFile = File(...)):
+    input_path = "uploaded_input.webm"
+    with open(input_path, "wb") as f:
+        shutil.copyfileobj(audio.file, f)
+
+    try:
+        text_said = transcribe(input_path)
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": f"Transcription failed: {e}"})
+
+    return await handle_message(text_said)
+
+@app.post("/chat-text")
+async def chat_text(message: TextMessage):
+    return await handle_message(message.text)
+
 @app.get("/audio")
 async def get_audio():
     return FileResponse("output.wav", media_type="audio/wav")
@@ -63,4 +71,3 @@ async def reset():
     global history
     history = [{"role": "system", "content": SYSTEM_PROMPT}]
     return {"status": "reset"}
-
