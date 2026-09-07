@@ -21,7 +21,7 @@ def play_audio(filepath):
         subprocess.run(["paplay", filepath])
 
 #function to convert text to speech using Piper and play the resulting audio
-def text_to_speech(text, speed = 0.7): #Tweak the speed parameter to adjust the speech rate (default is 0.85)
+def text_to_speech(text, speed = 0.7, play=True): #Tweak the speed parameter to adjust the speech rate (default is 0.85)
     result = subprocess.run(
         ["./piper/piper", "--model", "./piper/en_US-amy-medium.onnx", "--output_file", "output.wav", "--speed", str(speed)],
         input=text.encode("utf-8"),
@@ -33,7 +33,8 @@ def text_to_speech(text, speed = 0.7): #Tweak the speed parameter to adjust the 
     if not os.path.exists("output.wav"):
         print("Error: output.wav was not created.")
         return
-    play_audio("output.wav")
+    if play:
+        play_audio("output.wav")
 
 #finally, if this script is run directly, test the text-to-speech function
 if __name__ == "__main__":
